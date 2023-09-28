@@ -1,6 +1,9 @@
 package com.spring.batch.config;
 
 import com.spring.batch.listener.FirstStepListener;
+import com.spring.batch.processor.FirstItemProcessor;
+import com.spring.batch.reader.FirstItemReader;
+import com.spring.batch.writer.FirstItemWriter;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -35,7 +38,16 @@ public class SampleJob {
     @Autowired
     private FirstStepListener firstStepListener;
 
-    @Bean
+    @Autowired
+    private FirstItemReader firstItemReader;
+
+    @Autowired
+    private FirstItemProcessor firstItemProcessor;
+
+    @Autowired
+    private FirstItemWriter firstItemWriter;
+
+    //@Bean
     public Job firstJob() {
         return jobBuilderFactory.get("First Job")
                 .incrementer(new RunIdIncrementer())
@@ -84,11 +96,22 @@ public class SampleJob {
 //		};
 //	}
 
-//    @Bean
-//    public Job secondJob(){
-//        return jobBuilderFactory.get("Second Job")
-//                .incrementer(new RunIdIncrementer())
-//                .build();
-//    }
+    @Bean
+    public Job secondJob(){
+        return jobBuilderFactory.get("Second Job")
+                .incrementer(new RunIdIncrementer())
+                .start(firtChunckStep())
+                .next(secondStep())
+                .build();
+    }
+
+    private Step firtChunckStep(){
+        return stepBuilderFactory.get("First Chunck Step")
+                .<Integer, Long>chunk(3)
+                .reader(firstItemReader)
+                .processor(firstItemProcessor)
+                .writer(firstItemWriter)
+                .build();
+    }
 
 }
